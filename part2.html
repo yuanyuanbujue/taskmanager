@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Task Manager - Page 2</title>
+
+  <style>
+    :root {
+      --bg: #eef1f5;
+      --text: #000;
+      --card: #fff;
+      --sidebar: #e5e7eb;
+      /* LIGHTER for normal theme */
+      --accent: #2563eb;
+      --sidebar-text: #111827;
+      /* DARK TEXT for normal */
+    }
+
+    .coding {
+      --bg: #0d1117;
+      --text: #00ff9c;
+      --card: #161b22;
+      --sidebar: #010409;
+      --accent: #00ff9c;
+      --sidebar-text: #00ff9c;
+    }
+
+    body {
+      margin: 0;
+      font-family: Consolas, Segoe UI;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    /* layout */
+    .container {
+      display: flex;
+      height: 100vh;
+    }
+
+    /* sidebar */
+    .sidebar {
+      width: 240px;
+      background: var(--sidebar);
+      color: var(--sidebar-text);
+      padding: 12px;
+      overflow: auto;
+    }
+
+    .sidebar h3 {
+      margin-top: 0;
+      color: var(--sidebar-text);
+      /* FIXED */
+    }
+
+    /* add list */
+    .create-list {
+      display: flex;
+      gap: 5px;
+      margin-bottom: 10px;
+    }
+
+    .create-list input {
+      flex: 1;
+      padding: 6px;
+      border-radius: 5px;
+      border: none;
+    }
+
+    .create-list button {
+      width: 35px;
+      border: none;
+      border-radius: 5px;
+      background: var(--accent);
+      cursor: pointer;
+    }
+
+    /* list item */
+    .list-item {
+      background: #9ca3af;
+      /* lighter for normal */
+      padding: 6px;
+      border-radius: 6px;
+      margin-top: 6px;
+      cursor: pointer;
+      color: #000;
+    }
+
+    /* coding theme list */
+    .coding .list-item {
+      background: #161b22;
+      color: #00ff9c;
+    }
+
+    /* main */
+    .main {
+      flex: 1;
+      padding: 20px;
+      overflow: auto;
+    }
+
+    .task {
+      background: var(--card);
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 10px;
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .overdue {
+      border-left: 5px solid red;
+    }
+
+    button {
+      padding: 6px;
+      border: none;
+      border-radius: 6px;
+      background: var(--accent);
+      cursor: pointer;
+      margin-top: 5px;
+    }
+
+    .delete {
+      background: red;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="container">
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+      <h3>Lists</h3>
+
+      <!-- ADD LIST (NEW) -->
+      <div class="create-list">
+        <input id="listName" placeholder="New list">
+        <button onclick="createList()">+</button>
+      </div>
+
+      <div id="listButtons"></div>
+
+      <br>
+      <button onclick="goBack()">Back</button>
+    </div>
+
+    <!-- MAIN -->
+    <div class="main">
+      <h2>Tasks</h2>
+      <div id="tasks"></div>
+    </div>
+
+  </div>
+
+  <script>
+    let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+    let lists = JSON.parse(localStorage.getItem("lists")) || [];
+
+    /* THEME */
+    function loadTheme() {
+      let t = localStorage.getItem("theme") || "normal";
+      document.body.classList.toggle("coding", t === "coding");
+    }
+
+    /* SAVE */
+    function save() {
+      localStorage.setItem("tasks", JSON.stringify(tasks));
+      localStorage.setItem("lists", JSON.stringify(lists));
+    }
+
+    /* ADD LIST */
+    function createList() {
+      let name = document.getElementById("listName").value;
+      if (!name) return;
+
+      lists.push(name);
+      document.getElementById("listName").value = "";
+      save();
+      updateSidebar();
+    }
+
+    /* FORMAT */
+    function formatDate(d) {
+      if (!d) return "Not set";
+      return new Date(d).toLocaleString();
+    }
+
+    function countdown(due) {
+      if (!due) return "No due";
+      let diff = new Date(due) - new Date();
+      if (diff <= 0) return "Overdue";
+
+      let h = Math.floor(diff / 3600000);
+      let m = Math.floor(diff / 60000) % 60;
+
+      return h + "h " + m + "m";
+    }
+
+    /* DELETE */
+    function deleteTask(i) {
+      tasks.splice(i, 1);
+      save();
+      display();
+    }
+
+    /* DISPLAY TASKS */
+    function display(filterList = "") {
+      let area = document.getElementById("tasks");
+      area.innerHTML = "";
+
+      tasks.forEach((t, i) => {
+        if (filterList && t.list !== filterList) return;
+
+        let div = document.createElement("div");
+        div.className = "task" + (new Date(t.due) < new Date() ? " overdue" : "");
+
+        div.innerHTML =
+          "<strong>" + t.name + "</strong><br>" +
+          t.desc + "<br><br>" +
+          "List: " + (t.list || "None") + "<br>" +
+          "Start: " + formatDate(t.start) + "<br>" +
+          "Due: " + formatDate(t.due) + "<br>" +
+          "Time left: " + countdown(t.due) + "<br><br>" +
+          "<button class='delete' onclick='deleteTask(" + i + ")'>Delete</button>";
+
+        area.appendChild(div);
+      });
+    }
+
+    /* SIDEBAR */
+    function updateSidebar() {
+      let container = document.getElementById("listButtons");
+      container.innerHTML = "";
+
+      let all = document.createElement("div");
+      all.className = "list-item";
+      all.textContent = "All Tasks";
+      all.onclick = () => display();
+      container.appendChild(all);
+
+      lists.forEach(list => {
+        let div = document.createElement("div");
+        div.className = "list-item";
+        div.textContent = list;
+        div.onclick = () => display(list);
+        container.appendChild(div);
+      });
+    }
+
+    /* NAV */
+    function goBack() {
+      window.location.href = "index.html";
+    }
+
+    /* INIT */
+    loadTheme();
+    updateSidebar();
+    display();
+  </script>
+
+</body>
+
+</html>

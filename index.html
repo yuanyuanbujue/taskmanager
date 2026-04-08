@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Task Manager - Main</title>
+
+<style>
+:root{
+  --bg:#eef1f5;
+  --text:#000;
+  --card:#fff;
+  --sidebar:#1f2937;
+  --accent:#2563eb;
+}
+
+/* CODING THEME */
+.coding{
+  --bg:#0d1117;
+  --text:#00ff9c;
+  --card:#161b22;
+  --sidebar:#010409;
+  --accent:#00ff9c;
+}
+
+body{
+  font-family:Consolas, Segoe UI, Arial;
+  background:var(--bg);
+  color:var(--text);
+  margin:0;
+}
+
+.container{
+  display:flex;
+  height:100vh;
+}
+
+.sidebar{
+  width:220px;
+  background:var(--sidebar);
+  color:var(--text);
+  padding:12px;
+}
+
+.create-list{
+  display:flex;
+  gap:5px;
+}
+
+input, textarea{
+  width:100%;
+  padding:8px;
+  border-radius:6px;
+  border:1px solid #ccc;
+  margin-top:5px;
+}
+
+button{
+  padding:8px;
+  border:none;
+  border-radius:6px;
+  background:var(--accent);
+  color:black;
+  cursor:pointer;
+  margin-top:8px;
+}
+
+.main{
+  flex:1;
+  padding:20px;
+}
+
+.settings{
+  margin-top:10px;
+  padding:0px;
+  background:var(--card);
+  border-radius:10px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<div class="sidebar">
+  <h3>Lists</h3>
+
+  <div class="create-list">
+    <input id="listName" placeholder="New list">
+    <button onclick="createList()">+</button>
+  </div>
+
+  <div id="listButtons"></div>
+
+  <!-- SETTINGS -->
+  <div class="settings">
+    <h4>Theme</h4>
+    <button onclick="setTheme('normal')">Normal</button>
+    <button onclick="setTheme('coding')">Coding</button>
+    <br>
+  </div>
+</div>
+
+<div class="main">
+<h2>Add Task</h2>
+
+<input id="name" placeholder="Task Name">
+<textarea id="desc"></textarea>
+
+<div>Start</div>
+<input type="datetime-local" id="start">
+
+<div>Due</div>
+<input type="datetime-local" id="due">
+
+<button onclick="addTask()">Add Task</button>
+<button onclick="goPage2()">Go Page 2</button>
+</div>
+
+</div>
+
+<script>
+let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+let lists = JSON.parse(localStorage.getItem("lists")) || [];
+
+/* THEME */
+function loadTheme(){
+  let t = localStorage.getItem("theme") || "normal";
+  document.body.classList.toggle("coding", t==="coding");
+}
+function setTheme(t){
+  localStorage.setItem("theme",t);
+  loadTheme();
+}
+
+/* DATA */
+function save(){
+  localStorage.setItem("tasks",JSON.stringify(tasks));
+  localStorage.setItem("lists",JSON.stringify(lists));
+}
+
+function createList(){
+  let name=document.getElementById("listName").value;
+  if(!name) return;
+  lists.push(name);
+  document.getElementById("listName").value="";
+  save();
+  updateSidebar();
+}
+
+function updateSidebar(){
+  let c=document.getElementById("listButtons");
+  c.innerHTML="";
+  lists.forEach(l=>{
+    let d=document.createElement("div");
+    d.textContent=l;
+    c.appendChild(d);
+  });
+}
+
+function addTask(){
+  let name=document.getElementById("name").value;
+  if(!name) return;
+
+  tasks.push({
+    name,
+    desc:document.getElementById("desc").value,
+    start:document.getElementById("start").value,
+    due:document.getElementById("due").value
+  });
+
+  save();
+}
+
+function goPage2(){
+  location.href="part2.html";
+}
+
+loadTheme();
+updateSidebar();
+</script>
+
+</body>
+</html>
